@@ -1,0 +1,114 @@
+---
+title: 'STAT 5014: Homework 8'
+author: "Bobby Soule"
+date: "10/31/2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+# knitr::opts_chunk$set(echo = F, eval=T, cache=T, tidy.opts=list(width.cutoff=55),
+#                       tidy=T, include=FALSE, message=F, warning=F)
+
+setwd("/Users/bobbysoule/Documents/College/Graduate/Grad_GitHub/STAT_5014")
+
+library(dplyr)
+library(tidyr)
+library(tidytext)
+library(tm)
+library(stringr)
+library(wordcloud)
+```
+
+This week, we spoke about text mining and sentiment analysis.  Most of the material came from <http://tidytextmining.com/>.  While this is not the only way to mine textual data, it fits nicely into the tidy process we used in our search for Reproducible Analysis.
+
+## Problem 2: Class data
+
+**Load munge and create a story on the class dataset: survey_data.txt in this class repo.**
+
+Before beginning any cleaning or analysis, let us first look at the raw data.
+
+```{r}
+# load data
+survey_data <- read.table("survey_data.txt", header = T, sep = "\t", stringsAsFactors = F) %>% tbl_df
+colnames(survey_data) <- c("major", "platform", "level", "languages")
+knitr::kable(head(survey_data))
+```
+
+From looking first observations, we can see that the platform and level variables are already relatively clean. The platform variable only has two levels of interest: PC and Mac. People may have formatted their response differently or entered additional information, so we will have to clean up the data so that for each observation the platform variable takes on a value of either "pc" or "mac". The level variable could have had three levels, but there are only two levels in this data: beginner and intermediate. Similar to the platform variable, we will have to clean this variable so it only takes on values of "beginner" or "intermediate".  
+
+The major and languages variables will require a little more effort to clean. For the major varialbe, we want to extract only the persons major, so we can remove any additional information. The same will be done for the languages variable, but instead we will seek to extract information about the other programming languages that person knows and remove any additional information such as stop words. It is worth noting that both of that an individual may have mutliple majors and may know multiple programming languages; so to create a true tidy dataset, we will have to split up each observation so that we have a row for every combination of major and programming language for each individual.
+
+```{r}
+# store names of languages used by students
+langs <- c("none", "sas", "matlab", "sql", "minitab", "python", "spss", "c++", "obj-c", "java", "linux")
+
+# create a tidy dataset from survey data
+survey_tidy <- survey_data %>%
+  mutate(id = row_number(),
+         major = tolower(gsub("BS|-BS|-MS|-Master|\\(Stat\\)|, |/", " ", major)),
+         major = gsub("mechanical eng", "engineer", gsub("finance  finance ", "finance", major)),
+         platform = ifelse(grepl("PC", platform), "pc", "mac"),
+         level = ifelse(grepl("int", tolower(level)), "intermediate", "beginner"),
+         languages = gsub("  ", " ", gsub("\\(|\\)|/|,", " ", tolower(languages))),
+         languages = ifelse(languages=="none", "none", gsub("none ", "", languages))) %>% 
+  unnest_tokens(output = languages, input = languages, token = stringr::str_split, pattern = " ") %>% 
+  unnest_tokens(output = major, input = major) %>% 
+  filter(languages %in% langs) %>% 
+  select(id, major:languages)
+
+knitr::kable(head(survey_tidy))
+```
+
+Now that we have a tidy dataset, we are interested in analyzing the data primarily through exploratory graphical analysis. First, we will create datasets containing containing counts of the different categories for each of the major variables in our original dataset. Below I have printed one of these datasets so that you can see what they all look like.
+
+```{r}
+# get counts of categories for each variable in tidy dataset
+major_counts <- survey_tidy %>% group_by(id) %>% count(major) %>% ungroup %>% count(major)
+plat_counts <- survey_tidy %>% group_by(id) %>% count(platform) %>% ungroup %>% count(platform)
+level_counts <- survey_tidy %>% group_by(id) %>% count(level) %>% ungroup %>% count(level)
+lang_counts <- survey_tidy %>% group_by(id) %>% count(languages) %>% ungroup %>% count(languages)
+colnames(lang_counts) <- c("Language", "Count")
+
+knitr::kable(lang_counts)
+```
+
+Below is bar graph that I generated using count data for the majors variable. We can see that math is by far the biggest major. The second biggest is statistics and economics is a close third. The bar graph does not show this, but it is worth noting that many of the math majors said in the survey that they had a concentration in statistics.
+
+```{r}
+#create bar chart for majors
+counts <- major_counts$nn; labels <- major_counts$major
+barplot(counts, names.arg = labels, col = "darkgreen", xlab = "Degree Type", ylab = "Count",
+        main = "Number of Degrees Earned by Type")
+```
+
+Next, we have a pie chart showing the useage of PCs compared to Macs in our class. Normally, I am not a big fan of pie charts, since it is harder to interpret the relative sizes, but I find them adequate when only comparing two categories. We can see that roughly 79% of students in our class use a PC, and only 21% use a Mac.
+
+```{r}
+#create pie chart comparing platform use
+counts <- plat_counts$nn; platform <- plat_counts$platform
+pcnt <- round(counts / sum(counts) * 100); labels <- paste(platform, " ", pcnt, "%", sep = "")
+pie(counts, labels = labels, col = c("yellow", "orange"), main = "Platform Useage (PC vs Mac)")
+```
+
+Now we take a look at perhaps the most interesting variable: the programming languages (other than R) that students in our class know and use. To display this data, I have created wordcloud. We can see that SAS is the most used language, followed by Python and Matlab. Some students listed several languages, but noted in their survey response that they only knew a minimal amount of some or all of the languages that they listed. In a future study, it may be worth it to ask students the level of their mastery of these additional languages.
+
+```{r}
+#create wordcloud of other languages
+counts <- lang_counts$Count; words <- lang_counts$Language
+wordcloud(words, freq = counts, min.freq = 1, random.order = F, col = brewer.pal(8, "Set2"))
+```
+  
+## Problem 3: Case study
+
+**In the <http://tidytextmining.com> writeup, there are 3 case studies.  Your task is to make a new one.  You can take any one (or more) of these and change the dataset, combine them to do something new, etc.  Up to you!**
+
+```{r}
+# Not yet complete...
+```
+
+## Problem 4
+
+**Get an account at arc.vt.edu.  Make sure you can log in.**  
+
+I submitted an account request, but as of now (when I am typing this) I have not received a notification that the account has been officially created.
