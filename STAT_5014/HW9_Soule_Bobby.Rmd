@@ -7,7 +7,7 @@ output: html_document
 
 This week, we spoke about text mining and sentiment analysis.  Most of the material came from <http://tidytextmining.com/>.  While this is not the only way to mine textual data, it fits nicely into the tidy process we used in our search for Reproducible Analysis.
 
-## Problem 2: Text analysis 
+## Problem 2: Text analysis
 
 Duplicate one of the following analyses in Python in an R Notebook.  
 
@@ -56,6 +56,6 @@ wc.recolor(color_func=grey_color_func, random_state=3) # change colors to grey
 wc.to_file(d+'a_new_hope.png') # save as png file (cannot print image directly in rnotebook)
 ```
 
-In the above code, we first import of all of the packages we will use; the import statement in Python is similar to the library() function in R. Next, we create a function that will later be used to change the default colors of the word cloud to white and grey colors; after all, we don't want a colorful stormtrooper! After storing the path of the folder contaiing our files, we read in and store the mask image and the movie script text. Before creating the word cloud, we first do some preprocessing of the script, and we add some movie specific stop words to the stop words list. Finally, we create our wordcloud and we use the funciton we created earlier to change the colors of the words. Since we cannot directly print this image create in Python in an R Notebook, we will save it as a png file. The final image of the stormtrooper word cloud can be seen below.
+In the above code, we first import of all of the packages we will use; the import statement in Python is similar to the library() function in R. Next, we create a function that will later be used to change the default colors of the word cloud to white and grey colors; after all, we don't want a colorful stormtrooper! After storing the path of the folder contaiing our files, we read in and store the mask image and the movie script text. Before creating the word cloud, we first do some preprocessing of the script, and we add some movie specific stop words to the stop words list. Finally, we create our wordcloud and we use the funciton we created earlier to change the colors of the words. Note that I have removed several lines of code that were placed after the creation of the word cloud. These lines were using Python's matplotlib package to plot the image. Since we cannot directly print Python visuals in an R Notebook, we will instead save the word cloud as a png file. The final image of the stormtrooper word cloud can be seen below. 
 
 ![](a_new_hope.png)
